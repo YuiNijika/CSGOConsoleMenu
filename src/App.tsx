@@ -1,0 +1,16 @@
+import { CSGOMenu } from "./components/CSGOMenu"
+import { TitleBar } from "./components/TitleBar"
+import "./App.css"
+
+function App() {
+  return (
+    <div className="flex flex-col h-screen w-screen">
+      <TitleBar />
+      <div className="flex-1 overflow-auto">
+        <CSGOMenu />
+      </div>
+    </div>
+  )
+}
+
+export default App;
