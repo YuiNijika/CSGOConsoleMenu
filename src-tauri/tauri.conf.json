@@ -19,6 +19,8 @@
         "decorations": false,
         "alwaysOnTop": false,
         "resizable": false,
+        "minimizable": false,
+        "maximizable": false,
         "visible": true,
         "dragDropEnabled": false
       }

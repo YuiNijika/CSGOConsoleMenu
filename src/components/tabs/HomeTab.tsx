@@ -1,4 +1,4 @@
-import { AlertTriangle, Shield, CheckCircle } from "lucide-react"
+import { AlertTriangle, Shield, CheckCircle, Terminal, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface HomeTabProps {
@@ -9,6 +9,10 @@ interface HomeTabProps {
   onToggleInfiniteAmmo: () => void
   godMode: boolean
   infiniteAmmo: boolean
+  customCommand: string
+  onCommandChange: (value: string) => void
+  onSubmit: (e: React.FormEvent) => void
+  onReset: () => void
 }
 
 export function HomeTab({
@@ -19,6 +23,10 @@ export function HomeTab({
   onToggleInfiniteAmmo,
   godMode,
   infiniteAmmo,
+  customCommand,
+  onCommandChange,
+  onSubmit,
+  onReset,
 }: HomeTabProps) {
   if (csgoWindowFound === false) {
     return (
@@ -83,6 +91,37 @@ export function HomeTab({
           无限弹药 {infiniteAmmo && <CheckCircle className="h-4 w-4 ml-1" />}
         </Button>
       </div>
+
+      {/* 刷新重置 */}
+      <div className="flex gap-2">
+        <Button onClick={onReset} variant="outline" size="sm" className="flex-1">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          刷新重置
+        </Button>
+        <Button onClick={onEnableCheats} variant="default" size="sm" className="flex-1" disabled={!cheatsEnabled}>
+          <CheckCircle className="h-4 w-4 mr-2" />
+          已启用作弊
+        </Button>
+      </div>
+
+      {/* 自定义命令 */}
+      <form onSubmit={onSubmit} className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Terminal className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">自定义命令</span>
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={customCommand}
+            onChange={(e) => onCommandChange(e.target.value)}
+            placeholder="输入控制台命令..."
+            className="flex-1 px-3 py-2 text-sm border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <Button type="submit" size="sm">
+            发送
+          </Button>
+        </div>
+      </form>
     </div>
   )
 }

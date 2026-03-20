@@ -1,9 +1,12 @@
+mod settings;
+
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use tauri::{Manager, State};
 use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, ShowWindow, SW_RESTORE};
 use windows::Win32::Foundation::{HWND, LPARAM, BOOL};
 use enigo::{Enigo, Settings, Keyboard, Direction};
 use std::sync::Mutex;
+use settings::AppSettings;
 
 // 共享状态结构
 pub struct AppState {
@@ -39,7 +42,7 @@ fn toggle_menu(window: tauri::WebviewWindow) -> bool {
 }
 
 #[tauri::command]
-fn send_console_command(command: String, state: State<AppState>) -> Result<bool, String> {
+fn send_console_command(command: String, console_key: String, state: State<AppState>) -> Result<bool, String> {
     let hwnd_val = state.cached_hwnd.load(Ordering::Relaxed);
     let csgo_window = if hwnd_val != 0 {
         HWND(hwnd_val as *mut _)
@@ -58,7 +61,9 @@ fn send_console_command(command: String, state: State<AppState>) -> Result<bool,
     
     let mut enigo = Enigo::new(&Settings::default()).map_err(|e| format!("初始化失败 {:?}", e))?;
     
-    enigo.key(enigo::Key::Unicode('`'), Direction::Click).map_err(|e| format!("发送按键失败 {:?}", e))?;
+    // 使用配置的控制台按键
+    let console_char = console_key.chars().next().unwrap_or('`');
+    enigo.key(enigo::Key::Unicode(console_char), Direction::Click).map_err(|e| format!("发送按键失败 {:?}", e))?;
     std::thread::sleep(std::time::Duration::from_millis(100));
     
     for char in command.chars() {
@@ -83,7 +88,7 @@ fn send_console_command(command: String, state: State<AppState>) -> Result<bool,
     let _ = enigo.key(enigo::Key::Return, Direction::Click);
     std::thread::sleep(std::time::Duration::from_millis(100));
     
-    enigo.key(enigo::Key::Unicode('`'), Direction::Click)
+    enigo.key(enigo::Key::Unicode(console_char), Direction::Click)
         .unwrap_or_else(|e| {
             println!("警告 关闭控制台失败 {:?}", e);
         });
@@ -98,6 +103,28 @@ fn send_console_command(command: String, state: State<AppState>) -> Result<bool,
     }
     
     Ok(true)
+}
+
+#[tauri::command]
+fn get_settings() -> AppSettings {
+    AppSettings::load()
+}
+
+#[tauri::command]
+fn save_settings(menu_shortcut: String, console_key: String, app_handle: tauri::AppHandle) -> Result<String, String> {
+    let settings = AppSettings {
+        menu_shortcut,
+        console_key,
+    };
+    let result = settings.save()?;
+    
+    // 重启应用以应用新配置
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        let _ = app_handle.restart();
+    });
+    
+    Ok(result)
 }
 
 #[tauri::command]
@@ -159,28 +186,70 @@ fn find_csgo_window() -> Result<HWND, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let settings = AppSettings::load();
+    let menu_shortcut = settings.menu_shortcut;
+    
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(AppState::new())
-        .invoke_handler(tauri::generate_handler![toggle_menu, send_console_command, check_window])
-        .setup(|app| {
+        .invoke_handler(tauri::generate_handler![toggle_menu, send_console_command, check_window, get_settings, save_settings])
+        .setup(move |app| {
             // 设置全局快捷键监听
             let handle = app.handle().clone();
+            let shortcut_char = menu_shortcut.chars().next().unwrap_or('P');
+            let vk_code = match shortcut_char {
+                'A' => 0x41,
+                'B' => 0x42,
+                'C' => 0x43,
+                'D' => 0x44,
+                'E' => 0x45,
+                'F' => 0x46,
+                'G' => 0x47,
+                'H' => 0x48,
+                'I' => 0x49,
+                'J' => 0x4A,
+                'K' => 0x4B,
+                'L' => 0x4C,
+                'M' => 0x4D,
+                'N' => 0x4E,
+                'O' => 0x4F,
+                'P' => 0x50,
+                'Q' => 0x51,
+                'R' => 0x52,
+                'S' => 0x53,
+                'T' => 0x54,
+                'U' => 0x55,
+                'V' => 0x56,
+                'W' => 0x57,
+                'X' => 0x58,
+                'Y' => 0x59,
+                'Z' => 0x5A,
+                '0' => 0x30,
+                '1' => 0x31,
+                '2' => 0x32,
+                '3' => 0x33,
+                '4' => 0x34,
+                '5' => 0x35,
+                '6' => 0x36,
+                '7' => 0x37,
+                '8' => 0x38,
+                '9' => 0x39,
+                _ => 0x50, // 默认 P
+            };
+            
             std::thread::spawn(move || {
                 loop {
-                    // 监听 P 键 (虚拟键码 0x50)
                     if unsafe {
-                        use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_P};
-                        GetAsyncKeyState(VK_P.0 as i32) < 0
+                        use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState};
+                        GetAsyncKeyState(vk_code as i32) < 0
                     } {
                         std::thread::sleep(std::time::Duration::from_millis(100));
                         if let Some(window) = handle.get_webview_window("main") {
                             let _ = toggle_menu(window);
                         }
-                        // 等待按键释放
                         while unsafe {
-                            use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_P};
-                            GetAsyncKeyState(VK_P.0 as i32) < 0
+                            use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState};
+                            GetAsyncKeyState(vk_code as i32) < 0
                         } {
                             std::thread::sleep(std::time::Duration::from_millis(50));
                         }

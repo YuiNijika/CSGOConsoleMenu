@@ -11,6 +11,12 @@ import { HomeTab } from "./tabs/HomeTab"
 import { FeaturesTab } from "./tabs/FeaturesTab"
 import { WeaponsTab } from "./tabs/WeaponsTab"
 import { SettingsTab } from "./tabs/SettingsTab"
+import { toast } from "sonner"
+
+interface AppSettings {
+  menu_shortcut: string
+  console_key: string
+}
 
 export function CSGOMenu() {
   const [cheatsEnabled, setCheatsEnabled] = useState(false)
@@ -20,38 +26,28 @@ export function CSGOMenu() {
   const [infiniteGrenades, setInfiniteGrenades] = useState(false)
   const [noReload, setNoReload] = useState(false)
   const [customCommand, setCustomCommand] = useState("")
-  const [statusMessage, setStatusMessage] = useState<string>("")
-  const [isError, setIsError] = useState(false)
+  const [consoleKey, setConsoleKey] = useState("`")
 
   // 发送命令到 CSGO 控制台
   const sendToConsole = async (command: string) => {
     try {
-      setStatusMessage("正在发送命令")
-      setIsError(false)
-      const result = await invoke<boolean>("send_console_command", { command })
-
+      const result = await invoke<boolean>("send_console_command", { command, consoleKey })
+        
       if (command.includes("sv_cheats")) {
         if (result === true) {
           setCheatsEnabled(true)
-          setStatusMessage("作弊模式已启用")
-          setIsError(false)
+          toast.success("作弊模式已启用")
         } else {
           setCheatsEnabled(false)
-          setStatusMessage("作弊模式未启用或已禁用")
-          setIsError(true)
+          toast.error("作弊模式未启用或已禁用")
         }
       } else {
-        setStatusMessage(`命令已发送 ${command}`)
-        setIsError(false)
+        toast.success(`命令已发送：${command}`)
       }
-
-      setTimeout(() => setStatusMessage(""), 2000)
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error)
-      setStatusMessage(` 发送失败 ${errorMsg}`)
-      setIsError(true)
+      toast.error(`发送失败：${errorMsg}`)
       console.error("Failed to send command:", error)
-      setTimeout(() => setStatusMessage(""), 3000)
     }
   }
 
@@ -69,7 +65,11 @@ export function CSGOMenu() {
   const toggleInfiniteAmmo = async () => {
     const newVal = !infiniteAmmo
     setInfiniteAmmo(newVal)
-    await sendToConsole(newVal ? "sv_infinite_ammo 1" : "sv_infinite_ammo 0")
+    await sendToConsole(newVal ? "sv_infiniteammo 1" : "sv_infiniteammo 0")
+  }
+  
+  const resetAll = () => {
+    window.location.reload()
   }
 
   const toggleInfiniteGrenades = async () => {
@@ -96,10 +96,20 @@ export function CSGOMenu() {
     }
   }
 
-  // 初始化时检查窗口
+  // 初始化时检查窗口和加载设置
   useEffect(() => {
     checkCsgoWindow()
+    loadSettings()
   }, [])
+
+  const loadSettings = async () => {
+    try {
+      const settings = await invoke<AppSettings>("get_settings")
+      setConsoleKey(settings.console_key)
+    } catch (error) {
+      console.error("加载设置失败:", error)
+    }
+  }
 
   const handleCustomCommand = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -116,16 +126,6 @@ export function CSGOMenu() {
 
   return (
     <div className="w-full max-w-[500px] mx-auto">
-      {/* 状态提示 */}
-      {statusMessage && (
-        <div className={`text-xs py-1 px-2 rounded ${isError
-          ? 'bg-destructive/10 text-destructive'
-          : 'bg-green-500/10 text-green-600'
-          }`}>
-          {statusMessage}
-        </div>
-      )}
-
       <Tabs defaultValue="home" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="home">
@@ -176,6 +176,10 @@ export function CSGOMenu() {
               onToggleInfiniteAmmo={toggleInfiniteAmmo}
               godMode={godMode}
               infiniteAmmo={infiniteAmmo}
+              customCommand={customCommand}
+              onCommandChange={setCustomCommand}
+              onSubmit={handleCustomCommand}
+              onReset={resetAll}
             />
           </TabsContent>
 
@@ -191,6 +195,7 @@ export function CSGOMenu() {
               onToggleInfiniteAmmo={toggleInfiniteAmmo}
               onToggleInfiniteGrenades={toggleInfiniteGrenades}
               onToggleNoReload={toggleNoReload}
+              onSendCommand={sendToConsole}
             />
           </TabsContent>
 
@@ -198,17 +203,13 @@ export function CSGOMenu() {
           <TabsContent value="weapons">
             <WeaponsTab
               cheatsEnabled={cheatsEnabled}
-              onGiveWeapon={giveWeapon}
+              onSendCommand={sendToConsole}
             />
           </TabsContent>
 
           {/* 设置 Tab */}
           <TabsContent value="settings">
-            <SettingsTab
-              customCommand={customCommand}
-              onCommandChange={setCustomCommand}
-              onSubmit={handleCustomCommand}
-            />
+            <SettingsTab />
           </TabsContent>
         </div>
       </Tabs>
