@@ -21,7 +21,7 @@
         "resizable": false,
         "minimizable": false,
         "maximizable": false,
-        "visible": false,
+        "visible": true,
         "dragDropEnabled": false
       }
     ],
