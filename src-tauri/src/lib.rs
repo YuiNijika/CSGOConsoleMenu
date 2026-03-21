@@ -69,9 +69,9 @@ fn send_console_command(command: String, console_key: String, state: State<AppSt
     
     let mut enigo = Enigo::new(&Settings::default()).map_err(|e| format!("初始化失败 {:?}", e))?;
     
-    // 使用配置的控制台按键
-    let console_char = console_key.chars().next().unwrap_or('`');
-    enigo.key(enigo::Key::Unicode(console_char), Direction::Click).map_err(|e| format!("发送按键失败 {:?}", e))?;
+    // 开启控制台使用自定义按键
+    let open_console_char = console_key.chars().next().unwrap_or('`');
+    enigo.key(enigo::Key::Unicode(open_console_char), Direction::Click).map_err(|e| format!("发送按键失败 {:?}", e))?;
     std::thread::sleep(std::time::Duration::from_millis(100));
     
     for char in command.chars() {
@@ -96,7 +96,8 @@ fn send_console_command(command: String, console_key: String, state: State<AppSt
     let _ = enigo.key(enigo::Key::Return, Direction::Click);
     std::thread::sleep(std::time::Duration::from_millis(100));
     
-    enigo.key(enigo::Key::Unicode(console_char), Direction::Click)
+    // 关闭控制台固定使用 ` 键
+    enigo.key(enigo::Key::Unicode('`'), Direction::Click)
         .unwrap_or_else(|e| {
             println!("警告 关闭控制台失败 {:?}", e);
         });

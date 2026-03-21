@@ -5,7 +5,7 @@ interface TitleBarProps {
   title?: string
 }
 
-export function TitleBar({ title = "CSGO Console Menu" }: TitleBarProps) {
+export function TitleBar({ title = "CSGO Console Menu By 鼠子·YuiNijika" }: TitleBarProps) {
   const minimize = async () => {
     try {
       await getCurrentWebviewWindow().minimize()

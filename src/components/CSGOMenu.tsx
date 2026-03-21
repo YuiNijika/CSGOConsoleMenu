@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { invoke } from "@tauri-apps/api/core"
+import { Button } from "@/components/ui/button"
 import {
   Settings,
   Sword,
   Zap,
-  Home
+  Home,
+  Github
 } from "lucide-react"
 import { HomeTab } from "./tabs/HomeTab"
 import { FeaturesTab } from "./tabs/FeaturesTab"
@@ -134,7 +136,7 @@ export function CSGOMenu() {
   return (
     <div className="w-full max-w-[500px] mx-auto">
       <Tabs defaultValue="home" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="home">
             <Home className="h-4 w-4 mr-1" />
             首页
@@ -167,6 +169,12 @@ export function CSGOMenu() {
             <Settings className="h-4 w-4 mr-1" />
             设置
           </TabsTrigger>
+          <a href="https://github.com/YuiNijika/CSGOConsoleMenu" target="_blank" rel="noopener noreferrer">
+            <Button variant="ghost" size="sm" className="h-9 px-3">
+              <Github className="h-4 w-4" />
+              GitHub
+            </Button>
+          </a>
         </TabsList>
         <div className="p-4">
           {/* 首页 Tab */}

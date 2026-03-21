@@ -1,4 +1,4 @@
-import { AlertTriangle, Shield, CheckCircle, Terminal, RefreshCw, Gamepad2 } from "lucide-react"
+import { AlertTriangle, Shield, CheckCircle, Terminal, RefreshCw, Gamepad2, Github, Video, Gamepad } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface HomeTabProps {
@@ -89,14 +89,6 @@ export function HomeTab({
           </p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Button onClick={onToggleGodMode} variant={godMode ? "default" : "outline"}>
-          无敌模式 {godMode && <CheckCircle className="h-4 w-4 ml-1" />}
-        </Button>
-        <Button onClick={onToggleInfiniteAmmo} variant={infiniteAmmo ? "default" : "outline"}>
-          无限弹药 {infiniteAmmo && <CheckCircle className="h-4 w-4 ml-1" />}
-        </Button>
-      </div>
 
       {/* 刷新重置 */}
       <div className="flex gap-2">
@@ -128,6 +120,32 @@ export function HomeTab({
           </Button>
         </div>
       </form>
+
+      {/* 说明和工具实现逻辑 */}
+      <div className="space-y-2 pt-4 border-t">
+        <div className="flex items-center gap-2">
+          <Gamepad className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">关于</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          点击、实现，就这么简单；
+          <br />所有功能基于官方控制台指令。
+        </p>
+        <div className="grid grid-cols-2 gap-2 pt-2">
+          <a href="https://space.bilibili.com/435502585" target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm" className="w-full">
+              <Video className="h-4 w-4 mr-2" />
+              B 站教程
+            </Button>
+          </a>
+          <a href="https://github.com/YuiNijika/CSGOConsoleMenu" target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm" className="w-full">
+              <Github className="h-4 w-4 mr-2" />
+              GitHub 源码
+            </Button>
+          </a>
+        </div>
+      </div>
     </div>
   )
 }

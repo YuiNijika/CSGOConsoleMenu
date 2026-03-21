@@ -1,5 +1,11 @@
 import { Sword, Shield, Zap, Skull, Target } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 interface WeaponsTabProps {
   cheatsEnabled: boolean
@@ -12,6 +18,19 @@ interface WeaponItem {
 }
 
 const weaponsData = {
+  default: [
+    { name: "CT 主武器", command: "mp_ct_default_primary weapon_ak47" },
+    { name: "CT 副武器", command: "mp_ct_default_secondary weapon_usp_silencer" },
+    { name: "T 主武器", command: "mp_t_default_primary weapon_ak47" },
+    { name: "T 副武器", command: "mp_t_default_secondary weapon_deagle" },
+    { name: "全甲", command: "mp_free_armor 2" },
+    { name: "掉落手雷", command: "mp_death_drop_grenade 0" },
+    { name: "无限弹药", command: "sv_infinite_ammo 1" },
+    { name: "最大投掷物", command: "ammo_grenade_limit_total 6" },
+    { name: "接触武器显示", command: "mp_items_prohibited 0" },
+    { name: "T 默认手雷", command: "mp_t_default_grenades weapon_flashbang weapon_hegrenade weapon_smokegrenade weapon_molotov weapon_decoy" },
+    { name: "CT 默认手雷", command: "mp_ct_default_grenades weapon_flashbang weapon_hegrenade weapon_smokegrenade weapon_incgrenade weapon_decoy" },
+  ] as WeaponItem[],
   pistols: [
     { name: "格洛克 18", command: "give weapon_glock" },
     { name: "P2000", command: "give weapon_hkp2000" },
@@ -122,216 +141,316 @@ export function WeaponsTab({
   onSendCommand,
 }: WeaponsTabProps) {
   return (
-    <div className="space-y-3">
-      {/* 手枪 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Sword className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">手枪</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {weaponsData.pistols.map((weapon) => (
-            <Button
-              key={weapon.name}
-              onClick={() => onSendCommand(weapon.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-            >
-              {weapon.name}
-            </Button>
-          ))}
-        </div>
+    <div className="space-y-2">
+      {/* 顶部按钮 - 丢刀和解除武器限制 */}
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        <Button
+          onClick={() => onSendCommand("mp_drop_knife_enable 1")}
+          variant="outline"
+          size="sm"
+          disabled={!cheatsEnabled}
+          className="w-full"
+        >
+          允许丢刀
+        </Button>
+        <Button
+          onClick={() => onSendCommand("mp_weapons_allow_map_placed 1")}
+          variant="outline"
+          size="sm"
+          disabled={!cheatsEnabled}
+          className="w-full"
+        >
+          解除武器限制
+        </Button>
       </div>
 
-      {/* 重型武器 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Shield className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">重型武器</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {weaponsData.heavy.map((weapon) => (
-            <Button
-              key={weapon.name}
-              onClick={() => onSendCommand(weapon.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-            >
-              {weapon.name}
-            </Button>
-          ))}
-        </div>
-      </div>
+      <Accordion type="single" collapsible className="w-full" defaultValue="default">
+        {/* 默认装备 */}
+        <AccordionItem value="default">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              <span>默认装备</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pt-2">
+              {weaponsData.default.map((weapon) => (
+                <Button
+                  key={weapon.name}
+                  onClick={() => onSendCommand(weapon.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {weapon.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* 微型冲锋枪 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">微型冲锋枪</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {weaponsData.smg.map((weapon) => (
-            <Button
-              key={weapon.name}
-              onClick={() => onSendCommand(weapon.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-            >
-              {weapon.name}
-            </Button>
-          ))}
-        </div>
-      </div>
+        {/* 手枪 */}
+        <AccordionItem value="pistols">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Sword className="h-4 w-4 text-muted-foreground" />
+              <span>手枪</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pt-2">
+              {weaponsData.pistols.map((weapon) => (
+                <Button
+                  key={weapon.name}
+                  onClick={() => onSendCommand(weapon.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {weapon.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* 步枪 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Sword className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">步枪</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {weaponsData.rifles.map((weapon) => (
-            <Button
-              key={weapon.name}
-              onClick={() => onSendCommand(weapon.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-            >
-              {weapon.name}
-            </Button>
-          ))}
-        </div>
-      </div>
+        {/* 重型武器 */}
+        <AccordionItem value="heavy">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              <span>重型武器</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pt-2">
+              {weaponsData.heavy.map((weapon) => (
+                <Button
+                  key={weapon.name}
+                  onClick={() => onSendCommand(weapon.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {weapon.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* 狙击步枪 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Target className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">狙击步枪</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {weaponsData.sniper.map((weapon) => (
-            <Button
-              key={weapon.name}
-              onClick={() => onSendCommand(weapon.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-            >
-              {weapon.name}
-            </Button>
-          ))}
-        </div>
-      </div>
+        {/* 微型冲锋枪 */}
+        <AccordionItem value="smg">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-muted-foreground" />
+              <span>微型冲锋枪</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pt-2">
+              {weaponsData.smg.map((weapon) => (
+                <Button
+                  key={weapon.name}
+                  onClick={() => onSendCommand(weapon.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {weapon.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* 手雷/投掷物 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Skull className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">手雷/投掷物</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {weaponsData.grenades.map((weapon) => (
-            <Button
-              key={weapon.name}
-              onClick={() => onSendCommand(weapon.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-            >
-              {weapon.name}
-            </Button>
-          ))}
-        </div>
-      </div>
+        {/* 步枪 */}
+        <AccordionItem value="rifles">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Sword className="h-4 w-4 text-muted-foreground" />
+              <span>步枪</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pt-2">
+              {weaponsData.rifles.map((weapon) => (
+                <Button
+                  key={weapon.name}
+                  onClick={() => onSendCommand(weapon.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {weapon.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* 装备 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Shield className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">装备</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {weaponsData.equipment.map((weapon) => (
-            <Button
-              key={weapon.name}
-              onClick={() => onSendCommand(weapon.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-            >
-              {weapon.name}
-            </Button>
-          ))}
-        </div>
-      </div>
+        {/* 狙击步枪 */}
+        <AccordionItem value="sniper">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <span>狙击步枪</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pt-2">
+              {weaponsData.sniper.map((weapon) => (
+                <Button
+                  key={weapon.name}
+                  onClick={() => onSendCommand(weapon.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {weapon.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* 头号特训道具 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">头号特训</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {weaponsData.training.map((weapon) => (
-            <Button
-              key={weapon.name}
-              onClick={() => onSendCommand(weapon.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-            >
-              {weapon.name}
-            </Button>
-          ))}
-        </div>
-      </div>
+        {/* 手雷/投掷物 */}
+        <AccordionItem value="grenades">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Skull className="h-4 w-4 text-muted-foreground" />
+              <span>手雷/投掷物</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pt-2">
+              {weaponsData.grenades.map((weapon) => (
+                <Button
+                  key={weapon.name}
+                  onClick={() => onSendCommand(weapon.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {weapon.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* 近战武器 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Sword className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">近战武器</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {weaponsData.melee.map((weapon) => (
-            <Button
-              key={weapon.name}
-              onClick={() => onSendCommand(weapon.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-            >
-              {weapon.name}
-            </Button>
-          ))}
-        </div>
-      </div>
+        {/* 装备 */}
+        <AccordionItem value="equipment">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              <span>装备</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pt-2">
+              {weaponsData.equipment.map((weapon) => (
+                <Button
+                  key={weapon.name}
+                  onClick={() => onSendCommand(weapon.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {weapon.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* 其他 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">其他</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {weaponsData.other.map((weapon) => (
-            <Button
-              key={weapon.name}
-              onClick={() => onSendCommand(weapon.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-            >
-              {weapon.name}
-            </Button>
-          ))}
-        </div>
-      </div>
+        {/* 头号特训道具 */}
+        <AccordionItem value="training">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-muted-foreground" />
+              <span>头号特训</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pt-2">
+              {weaponsData.training.map((weapon) => (
+                <Button
+                  key={weapon.name}
+                  onClick={() => onSendCommand(weapon.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {weapon.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* 近战武器 */}
+        <AccordionItem value="melee">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Sword className="h-4 w-4 text-muted-foreground" />
+              <span>近战武器</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 pt-2">
+              {weaponsData.melee.map((weapon) => (
+                <Button
+                  key={weapon.name}
+                  onClick={() => onSendCommand(weapon.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {weapon.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* 其他 */}
+        <AccordionItem value="other">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-muted-foreground" />
+              <span>其他</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pt-2">
+              {weaponsData.other.map((weapon) => (
+                <Button
+                  key={weapon.name}
+                  onClick={() => onSendCommand(weapon.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {weapon.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   )
 }
