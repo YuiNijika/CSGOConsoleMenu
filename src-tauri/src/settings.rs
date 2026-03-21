@@ -19,7 +19,11 @@ impl Default for AppSettings {
 
 impl AppSettings {
     pub fn get_config_path() -> PathBuf {
-        PathBuf::from("./src/config.json")
+        // 使用系统文档目录
+        let config_dir = dirs::document_dir()
+            .unwrap_or_else(|| PathBuf::from("."))
+            .join("CSGOConsoleMenu");
+        config_dir.join("config.json")
     }
 
     pub fn load() -> Self {
