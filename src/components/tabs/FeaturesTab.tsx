@@ -10,6 +10,12 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { useState } from "react"
 
 interface FeaturesTabProps {
@@ -65,9 +71,9 @@ const serverCommands = [
   { name: "人数平衡 (2)", command: "mp_limitteams 2" },
   { name: "最大金钱", command: "mp_maxmoney 16000" },
   { name: "出生金钱", command: "mp_startmoney 16000" },
-  { name: "最大局数 (30)", command: "mp_maxrounds 30" },
+  { name: "最大局数", command: "mp_maxrounds", defaultValue: "30", needsInput: true },
   { name: "随地购买", command: "mp_buy_anywhere 1" },
-  { name: "C4 时间 (45s)", command: "mp_c4timer 45" },
+  { name: "C4 时间", command: "mp_c4timer", defaultValue: "45", needsInput: true },
   { name: "关闭友伤", command: "mp_friendlyfire 0" },
 ]
 
@@ -126,347 +132,234 @@ export function FeaturesTab({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">无敌模式</span>
-        </div>
-        <Switch checked={godMode} onCheckedChange={onToggleGodMode} disabled={!cheatsEnabled} />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Crosshair className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">无限弹药</span>
-        </div>
-        <Switch checked={infiniteAmmo} onCheckedChange={onToggleInfiniteAmmo} disabled={!cheatsEnabled} />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Target className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">无限手雷</span>
-        </div>
-        <Switch checked={infiniteGrenades} onCheckedChange={onToggleInfiniteGrenades} disabled={!cheatsEnabled} />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Settings className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">无需换弹</span>
-        </div>
-        <Switch checked={noReload} onCheckedChange={onToggleNoReload} disabled={!cheatsEnabled} />
-      </div>
-
-      {/* 性能显示 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">性能显示</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            onClick={() => onSendCommand("cl_showfps 1")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            显示 FPS
-          </Button>
-          <Button
-            onClick={() => onSendCommand("net_graph 1")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            网络监控
-          </Button>
-          <Button
-            onClick={() => onSendCommand("cl_showfps 0")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            隐藏 FPS
-          </Button>
-          <Button
-            onClick={() => onSendCommand("net_graph 0")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            隐藏监控
-          </Button>
-        </div>
-      </div>
-
-      {/* 服务器指令 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <RefreshCw className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">服务器指令</span>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-          {serverCommands.map((item) => (
-            <Button
-              key={item.name}
-              onClick={() => onSendCommand(item.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-              className="w-full"
-            >
-              {item.name}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* 物理设置 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">物理/连跳</span>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-          {physicsCommands.map((item) => (
-            item.needsInput ? (
-              <Dialog key={item.command}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" disabled={!cheatsEnabled} className="w-full">
+    <div className="space-y-2">
+      {/* 手风琴布局 */}
+      <Accordion type="single" collapsible className="w-full" defaultValue="physics">
+        {/* 物理设置 */}
+        <AccordionItem value="physics">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-muted-foreground" />
+              <span>物理/连跳</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+              {physicsCommands.map((item) => (
+                item.needsInput ? (
+                  <Dialog key={item.command}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" disabled={!cheatsEnabled} className="w-full">
+                        {item.name}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px] w-[90vw]">
+                      <DialogHeader>
+                        <DialogTitle>{item.name}</DialogTitle>
+                      </DialogHeader>
+                      <div className="py-4">
+                        <Input
+                          defaultValue={item.defaultValue}
+                          placeholder="输入数值"
+                          id={`input-${item.command}`}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <DialogClose asChild>
+                          <Button
+                            onClick={() => {
+                              const input = document.getElementById(`input-${item.command}`) as HTMLInputElement
+                              if (input) {
+                                onSendCommand(`${item.command} ${input.value}`)
+                              }
+                            }}
+                            size="sm"
+                            className="w-full sm:w-auto"
+                          >
+                            应用
+                          </Button>
+                        </DialogClose>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                ) : (
+                  <Button
+                    key={item.command}
+                    onClick={() => onSendCommand(`${item.command} ${item.defaultValue}`)}
+                    variant="outline"
+                    size="sm"
+                    disabled={!cheatsEnabled}
+                    className="w-full"
+                  >
                     {item.name}
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px] w-[90vw]">
-                  <DialogHeader>
-                    <DialogTitle>{item.name}</DialogTitle>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <Input
-                      defaultValue={item.defaultValue}
-                      placeholder="输入数值"
-                      id={`input-${item.command}`}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <DialogClose asChild>
-                      <Button
-                        onClick={() => {
-                          const input = document.getElementById(`input-${item.command}`) as HTMLInputElement
-                          if (input) {
-                            onSendCommand(`${item.command} ${input.value}`)
-                          }
-                        }}
-                        size="sm"
-                        className="w-full sm:w-auto"
-                      >
-                        应用
+                )
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* 视觉辅助 */}
+        <AccordionItem value="visual">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <span>视觉辅助</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+              {visualCommands.map((item) => {
+                const isActive = visualStates[item.name] || false
+                return (
+                  <Button
+                    key={item.name}
+                    onClick={() => toggleVisual(item)}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    disabled={!cheatsEnabled}
+                    className="w-full"
+                  >
+                    {item.name} {isActive && <CheckCircle className="h-4 w-4 ml-1" />}
+                  </Button>
+                )
+              })}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* 服务器指令 */}
+        <AccordionItem value="server">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4 text-muted-foreground" />
+              <span>服务器指令</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+              {serverCommands.map((item) => (
+                item.needsInput ? (
+                  <Dialog key={item.command}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" disabled={!cheatsEnabled} className="w-full">
+                        {item.name}
                       </Button>
-                    </DialogClose>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            ) : (
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px] w-[90vw]">
+                      <DialogHeader>
+                        <DialogTitle>{item.name}</DialogTitle>
+                      </DialogHeader>
+                      <div className="py-4">
+                        <Input
+                          defaultValue={item.defaultValue}
+                          placeholder="输入数值"
+                          id={`input-server-${item.command}`}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <DialogClose asChild>
+                          <Button
+                            onClick={() => {
+                              const input = document.getElementById(`input-server-${item.command}`) as HTMLInputElement
+                              if (input) {
+                                onSendCommand(`${item.command} ${input.value}`)
+                              }
+                            }}
+                            size="sm"
+                            className="w-full sm:w-auto"
+                          >
+                            应用
+                          </Button>
+                        </DialogClose>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                ) : (
+                  <Button
+                    key={item.name}
+                    onClick={() => onSendCommand(item.command)}
+                    variant="outline"
+                    size="sm"
+                    disabled={!cheatsEnabled}
+                    className="w-full"
+                  >
+                    {item.name}
+                  </Button>
+                )
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* 默认装备 */}
+        <AccordionItem value="equipment">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              <span>默认装备</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+              {equipmentCommands.map((item) => (
+                <Button
+                  key={item.name}
+                  onClick={() => onSendCommand(item.command)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {item.name}
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* 刀具替换 */}
+        <AccordionItem value="knives">
+          <AccordionTrigger className="text-sm">
+            <div className="flex items-center gap-2">
+              <Sword className="h-4 w-4 text-muted-foreground" />
+              <span>刀具替换</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+              {knifeSubclassData.map((knife) => (
+                <Button
+                  key={knife.name}
+                  onClick={() => onSendCommand(`subclass_create ${knife.id}`)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!cheatsEnabled}
+                  className="w-full"
+                >
+                  {knife.name}
+                </Button>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 gap-2 mt-2">
               <Button
-                key={item.command}
-                onClick={() => onSendCommand(`${item.command} ${item.defaultValue}`)}
+                onClick={() => {
+                  const subclassId = prompt("请输入要替换的刀 ID (例如：515 为蝴蝶刀):", "515")
+                  if (subclassId !== null && subclassId.trim()) {
+                    onSendCommand(`ent_fire weapon_knife changesubclass ${subclassId}`)
+                  }
+                }}
                 variant="outline"
                 size="sm"
                 disabled={!cheatsEnabled}
                 className="w-full"
               >
-                {item.name}
+                替换手中刀 (输入 subclass ID)
               </Button>
-            )
-          ))}
-        </div>
-      </div>
-
-      {/* 视觉辅助 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Target className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">视觉辅助</span>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-          {visualCommands.map((item) => {
-            const isActive = visualStates[item.name] || false
-            return (
-              <Button
-                key={item.name}
-                onClick={() => toggleVisual(item)}
-                variant={isActive ? "default" : "outline"}
-                size="sm"
-                disabled={!cheatsEnabled}
-                className="w-full"
-              >
-                {item.name} {isActive && <CheckCircle className="h-4 w-4 ml-1" />}
-              </Button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* 默认装备设置 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Shield className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">默认装备</span>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-          {equipmentCommands.map((item) => (
-            <Button
-              key={item.name}
-              onClick={() => onSendCommand(item.command)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-              className="w-full"
-            >
-              {item.name}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* 刀具替换 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Sword className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">刀具替换</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-          {knifeSubclassData.map((knife) => (
-            <Button
-              key={knife.name}
-              onClick={() => onSendCommand(`subclass_create ${knife.id}`)}
-              variant="outline"
-              size="sm"
-              disabled={!cheatsEnabled}
-              className="w-full"
-            >
-              {knife.name}
-            </Button>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 gap-2 mt-2">
-          <Button
-            onClick={() => {
-              const subclassId = prompt("请输入要替换的刀 ID (例如：515 为蝴蝶刀):", "515")
-              if (subclassId !== null && subclassId.trim()) {
-                onSendCommand(`ent_fire weapon_knife changesubclass ${subclassId}`)
-              }
-            }}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-            className="w-full"
-          >
-            替换手中刀 (输入 subclass ID)
-          </Button>
-        </div>
-      </div>
-
-      {/* 准星设置 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Target className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">准星设置</span>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          <Button
-            onClick={() => onSendCommand("cl_crosshairstyle 0")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            默认
-          </Button>
-          <Button
-            onClick={() => onSendCommand("cl_crosshairstyle 2")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            经典静态
-          </Button>
-          <Button
-            onClick={() => onSendCommand("cl_crosshairstyle 4")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            经典动态
-          </Button>
-          <Button
-            onClick={() => onSendCommand("cl_crosshairsize 4")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            标准长度
-          </Button>
-          <Button
-            onClick={() => onSendCommand("cl_crosshairthickness 1")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            最细
-          </Button>
-          <Button
-            onClick={() => onSendCommand("cl_crosshairdot 0")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            无中心点
-          </Button>
-        </div>
-      </div>
-
-      {/* Bot 指令 */}
-      <div className="border-t pt-3 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Bot 控制</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            onClick={() => onSendCommand("bot_add")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            添加 Bot
-          </Button>
-          <Button
-            onClick={() => onSendCommand("bot_kick")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            踢出所有
-          </Button>
-          <Button
-            onClick={() => onSendCommand("bot_stop 1")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            冻结 Bot
-          </Button>
-          <Button
-            onClick={() => onSendCommand("bot_kill")}
-            variant="outline"
-            size="sm"
-            disabled={!cheatsEnabled}
-          >
-            处死所有
-          </Button>
-        </div>
-      </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   )
 }
