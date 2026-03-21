@@ -17,11 +17,11 @@
         "height": 650,
         "transparent": false,
         "decorations": false,
-        "alwaysOnTop": false,
+        "alwaysOnTop": true,
         "resizable": false,
         "minimizable": false,
         "maximizable": false,
-        "visible": true,
+        "visible": false,
         "dragDropEnabled": false
       }
     ],

@@ -1,4 +1,4 @@
-import { Terminal, Keyboard } from "lucide-react"
+import { Keyboard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { invoke } from "@tauri-apps/api/core"
@@ -6,8 +6,7 @@ import { useState, useEffect } from "react"
 import { toast } from "sonner"
 
 interface SettingsTabProps {
-  onCommandChange?: (value: string) => void
-  onSubmit?: (e: React.FormEvent) => void
+  onConsoleKeyChange?: (value: string) => void
 }
 
 interface AppSettings {
@@ -16,13 +15,18 @@ interface AppSettings {
 }
 
 export function SettingsTab({
+  onConsoleKeyChange,
 }: SettingsTabProps) {
   const [menuShortcut, setMenuShortcut] = useState("P")
   const [consoleKey, setConsoleKey] = useState("`")
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  // 加载设置
+  // 加载设置（只在组件首次挂载时执行一次）
   useEffect(() => {
-    loadSettings()
+    if (!isLoaded) {
+      loadSettings()
+      setIsLoaded(true)
+    }
   }, [])
 
   const loadSettings = async () => {
@@ -42,6 +46,10 @@ export function SettingsTab({
         consoleKey: consoleKey
       })
       toast.success("设置已保存")
+      // 通知父组件更新状态
+      if (onConsoleKeyChange) {
+        onConsoleKeyChange(consoleKey)
+      }
     } catch (error) {
       toast.error(`保存失败 ${error}`)
     }

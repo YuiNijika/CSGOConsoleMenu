@@ -1,4 +1,4 @@
-import { Shield, Crosshair, Target, Settings, Zap, RefreshCw, DollarSign, Clock, Users, Sword, CheckCircle } from "lucide-react"
+import { Shield, Crosshair, Target, Settings, Zap, RefreshCw, Users, Sword, CheckCircle } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog"
 import { useState } from "react"
 
@@ -122,12 +123,6 @@ export function FeaturesTab({
     const newState = !currentState
     setVisualStates(prev => ({ ...prev, [item.name]: newState }))
     onSendCommand(newState ? item.commandOn : item.commandOff)
-  }
-  const handlePhysicsCommand = (cmd: string, defaultValue: string) => {
-    const value = prompt(`请输入${cmd}的值:`, defaultValue)
-    if (value !== null && value.trim()) {
-      onSendCommand(`${cmd} ${value}`)
-    }
   }
 
   return (
@@ -255,18 +250,20 @@ export function FeaturesTab({
                     />
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button
-                      onClick={() => {
-                        const input = document.getElementById(`input-${item.command}`) as HTMLInputElement
-                        if (input) {
-                          onSendCommand(`${item.command} ${input.value}`)
-                        }
-                      }}
-                      size="sm"
-                      className="w-full sm:w-auto"
-                    >
-                      应用
-                    </Button>
+                    <DialogClose asChild>
+                      <Button
+                        onClick={() => {
+                          const input = document.getElementById(`input-${item.command}`) as HTMLInputElement
+                          if (input) {
+                            onSendCommand(`${item.command} ${input.value}`)
+                          }
+                        }}
+                        size="sm"
+                        className="w-full sm:w-auto"
+                      >
+                        应用
+                      </Button>
+                    </DialogClose>
                   </div>
                 </DialogContent>
               </Dialog>

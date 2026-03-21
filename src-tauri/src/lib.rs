@@ -24,9 +24,17 @@ impl AppState {
 }
 
 static MENU_VISIBLE: AtomicBool = AtomicBool::new(false);
+static SHORTCUT_KEY: AtomicU64 = AtomicU64::new(0x50); // 默认 P
 
 #[tauri::command]
 fn toggle_menu(window: tauri::WebviewWindow) -> bool {
+    // 先设置前景窗口，防止按键传递到系统
+    if let Ok(hwnd_ptr) = window.hwnd() {
+        unsafe {
+            let _ = SetForegroundWindow(HWND(hwnd_ptr.0));
+        }
+    }
+    
     let current = MENU_VISIBLE.load(Ordering::SeqCst);
     let new_state = !current;
     MENU_VISIBLE.store(new_state, Ordering::SeqCst);
@@ -106,24 +114,57 @@ fn send_console_command(command: String, console_key: String, state: State<AppSt
 }
 
 #[tauri::command]
+fn launch_csgo() -> Result<(), String> {
+    use std::process::Command;
+    
+    Command::new("cmd")
+        .args(["/c", "start", "steam://rungameid/4465480"])
+        .spawn()
+        .map_err(|e| format!("启动失败：{}", e))?;
+    
+    Ok(())
+}
+
+#[tauri::command]
 fn get_settings() -> AppSettings {
     AppSettings::load()
 }
 
 #[tauri::command]
-fn save_settings(menu_shortcut: String, console_key: String, app_handle: tauri::AppHandle) -> Result<String, String> {
+fn save_settings(menu_shortcut: String, console_key: String) -> Result<String, String> {
+    // 更新全局快捷键按键
+    let shortcut_char = menu_shortcut.chars().next().unwrap_or('P');
+    let new_vk = match shortcut_char {
+        // 字母 A-Z
+        'A' | 'a' => 0x41, 'B' | 'b' => 0x42, 'C' | 'c' => 0x43, 'D' | 'd' => 0x44,
+        'E' | 'e' => 0x45, 'F' | 'f' => 0x46, 'G' | 'g' => 0x47, 'H' | 'h' => 0x48,
+        'I' | 'i' => 0x49, 'J' | 'j' => 0x4A, 'K' | 'k' => 0x4B, 'L' | 'l' => 0x4C,
+        'M' | 'm' => 0x4D, 'N' | 'n' => 0x4E, 'O' | 'o' => 0x4F, 'P' | 'p' => 0x50,
+        'Q' | 'q' => 0x51, 'R' | 'r' => 0x52, 'S' | 's' => 0x53, 'T' | 't' => 0x54,
+        'U' | 'u' => 0x55, 'V' | 'v' => 0x56, 'W' | 'w' => 0x57, 'X' | 'x' => 0x58,
+        'Y' | 'y' => 0x59, 'Z' | 'z' => 0x5A,
+        // 数字 0-9
+        '0' => 0x30, '1' => 0x31, '2' => 0x32, '3' => 0x33, '4' => 0x34,
+        '5' => 0x35, '6' => 0x36, '7' => 0x37, '8' => 0x38, '9' => 0x39,
+        // F1-F12
+        '₁' => 0x70, '₂' => 0x71, '₃' => 0x72, '₄' => 0x73, '₅' => 0x74, '₆' => 0x75,
+        '₇' => 0x76, '₈' => 0x77, '₉' => 0x78, '₊' => 0x79, '₋' => 0x7A, '₌' => 0x7B,
+        // 特殊键
+        '`' | '~' => 0xC0, '-' | '_' => 0xBD, '=' | '+' => 0xBB,
+        '[' | '{' => 0xDB, ']' | '}' => 0xDD, '\\' | '|' => 0xDC,
+        ';' | ':' => 0xBA, '\'' | '"' => 0xDE, ',' | '<' => 0xBC,
+        '.' | '>' => 0xBE, '/' | '?' => 0xBF,
+        // 功能键
+        ' ' => 0x20, // Space
+        _ => 0x50, // 默认 P
+    };
+    SHORTCUT_KEY.store(new_vk, Ordering::Relaxed);
+    
     let settings = AppSettings {
         menu_shortcut,
         console_key,
     };
     let result = settings.save()?;
-    
-    // 重启应用以应用新配置
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(500));
-        let _ = app_handle.restart();
-    });
-    
     Ok(result)
 }
 
@@ -187,73 +228,84 @@ fn find_csgo_window() -> Result<HWND, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let settings = AppSettings::load();
-    let menu_shortcut = settings.menu_shortcut;
+    println!("启动时加载的配置：{:?}", settings);
+    
+    // 初始化快捷键
+    let shortcut_char = settings.menu_shortcut.chars().next().unwrap_or('P');
+    let initial_vk = match shortcut_char {
+        // 字母 A-Z
+        'A' | 'a' => 0x41, 'B' | 'b' => 0x42, 'C' | 'c' => 0x43, 'D' | 'd' => 0x44,
+        'E' | 'e' => 0x45, 'F' | 'f' => 0x46, 'G' | 'g' => 0x47, 'H' | 'h' => 0x48,
+        'I' | 'i' => 0x49, 'J' | 'j' => 0x4A, 'K' | 'k' => 0x4B, 'L' | 'l' => 0x4C,
+        'M' | 'm' => 0x4D, 'N' | 'n' => 0x4E, 'O' | 'o' => 0x4F, 'P' | 'p' => 0x50,
+        'Q' | 'q' => 0x51, 'R' | 'r' => 0x52, 'S' | 's' => 0x53, 'T' | 't' => 0x54,
+        'U' | 'u' => 0x55, 'V' | 'v' => 0x56, 'W' | 'w' => 0x57, 'X' | 'x' => 0x58,
+        'Y' | 'y' => 0x59, 'Z' | 'z' => 0x5A,
+        // 数字 0-9
+        '0' => 0x30, '1' => 0x31, '2' => 0x32, '3' => 0x33, '4' => 0x34,
+        '5' => 0x35, '6' => 0x36, '7' => 0x37, '8' => 0x38, '9' => 0x39,
+        // F1-F12
+        '₁' => 0x70, '₂' => 0x71, '₃' => 0x72, '₄' => 0x73, '₅' => 0x74, '₆' => 0x75,
+        '₇' => 0x76, '₈' => 0x77, '₉' => 0x78, '₊' => 0x79, '₋' => 0x7A, '₌' => 0x7B,
+        // 特殊键
+        '`' | '~' => 0xC0, '-' | '_' => 0xBD, '=' | '+' => 0xBB,
+        '[' | '{' => 0xDB, ']' | '}' => 0xDD, '\\' | '|' => 0xDC,
+        ';' | ':' => 0xBA, '\'' | '"' => 0xDE, ',' | '<' => 0xBC,
+        '.' | '>' => 0xBE, '/' | '?' => 0xBF,
+        // 功能键
+        ' ' => 0x20, // Space
+        _ => 0x50, // 默认 P
+    };
+    SHORTCUT_KEY.store(initial_vk, Ordering::Relaxed);
     
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(AppState::new())
-        .invoke_handler(tauri::generate_handler![toggle_menu, send_console_command, check_window, get_settings, save_settings])
+        .invoke_handler(tauri::generate_handler![toggle_menu, send_console_command, check_window, get_settings, save_settings, launch_csgo])
         .setup(move |app| {
             // 设置全局快捷键监听
             let handle = app.handle().clone();
-            let shortcut_char = menu_shortcut.chars().next().unwrap_or('P');
-            let vk_code = match shortcut_char {
-                'A' => 0x41,
-                'B' => 0x42,
-                'C' => 0x43,
-                'D' => 0x44,
-                'E' => 0x45,
-                'F' => 0x46,
-                'G' => 0x47,
-                'H' => 0x48,
-                'I' => 0x49,
-                'J' => 0x4A,
-                'K' => 0x4B,
-                'L' => 0x4C,
-                'M' => 0x4D,
-                'N' => 0x4E,
-                'O' => 0x4F,
-                'P' => 0x50,
-                'Q' => 0x51,
-                'R' => 0x52,
-                'S' => 0x53,
-                'T' => 0x54,
-                'U' => 0x55,
-                'V' => 0x56,
-                'W' => 0x57,
-                'X' => 0x58,
-                'Y' => 0x59,
-                'Z' => 0x5A,
-                '0' => 0x30,
-                '1' => 0x31,
-                '2' => 0x32,
-                '3' => 0x33,
-                '4' => 0x34,
-                '5' => 0x35,
-                '6' => 0x36,
-                '7' => 0x37,
-                '8' => 0x38,
-                '9' => 0x39,
-                _ => 0x50, // 默认 P
-            };
             
             std::thread::spawn(move || {
+                let mut last_state = false;
                 loop {
-                    if unsafe {
+                    let current_state = unsafe {
                         use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState};
-                        GetAsyncKeyState(vk_code as i32) < 0
-                    } {
-                        std::thread::sleep(std::time::Duration::from_millis(100));
+                        let vk_code = SHORTCUT_KEY.load(Ordering::Relaxed) as u32;
+                        (GetAsyncKeyState(vk_code as i32) as u16) & 0x8000u16 != 0
+                    };
+                    
+                    // 检测按键按下瞬间
+                    if current_state && !last_state {
+                        // 立即设置前景窗口，阻止按键传递
                         if let Some(window) = handle.get_webview_window("main") {
-                            let _ = toggle_menu(window);
+                            if let Ok(hwnd_ptr) = window.hwnd() {
+                                unsafe {
+                                    use windows::Win32::UI::WindowsAndMessaging::SetForegroundWindow;
+                                    let _ = SetForegroundWindow(HWND(hwnd_ptr.0));
+                                }
+                            }
                         }
+                        
+                        // 等待按键释放
+                        std::thread::sleep(std::time::Duration::from_millis(100));
                         while unsafe {
                             use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState};
-                            GetAsyncKeyState(vk_code as i32) < 0
+                            let vk_code = SHORTCUT_KEY.load(Ordering::Relaxed) as u32;
+                            (GetAsyncKeyState(vk_code as i32) as u16) & 0x8000u16 != 0
                         } {
                             std::thread::sleep(std::time::Duration::from_millis(50));
                         }
+                        
+                        // 额外延迟确保系统不响应
+                        std::thread::sleep(std::time::Duration::from_millis(100));
+                        
+                        if let Some(window) = handle.get_webview_window("main") {
+                            let _ = toggle_menu(window);
+                        }
                     }
+                    
+                    last_state = current_state;
                     std::thread::sleep(std::time::Duration::from_millis(10));
                 }
             });

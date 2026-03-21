@@ -105,7 +105,9 @@ export function CSGOMenu() {
   const loadSettings = async () => {
     try {
       const settings = await invoke<AppSettings>("get_settings")
+      console.log("加载到的配置:", settings)
       setConsoleKey(settings.console_key)
+      console.log("设置 consoleKey 为:", settings.console_key)
     } catch (error) {
       console.error("加载设置失败:", error)
     }
@@ -119,9 +121,14 @@ export function CSGOMenu() {
     }
   }
 
-  // 武器相关命令
-  const giveWeapon = async (weapon: string) => {
-    await sendToConsole(`give ${weapon}`)
+  const launchGame = async () => {
+    try {
+      await invoke("launch_csgo")
+      toast.success("正在启动 CSGO...")
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      toast.error(`启动失败：${errorMsg}`)
+    }
   }
 
   return (
@@ -137,9 +144,7 @@ export function CSGOMenu() {
             disabled={!cheatsEnabled}
             onClick={() => {
               if (!cheatsEnabled) {
-                setStatusMessage('请先在首页启用作弊模式')
-                setIsError(true)
-                setTimeout(() => setStatusMessage(''), 2000)
+                toast.error('请先在首页启用作弊模式')
               }
             }}
           >
@@ -151,9 +156,7 @@ export function CSGOMenu() {
             disabled={!cheatsEnabled}
             onClick={() => {
               if (!cheatsEnabled) {
-                setStatusMessage('请先在首页启用作弊模式')
-                setIsError(true)
-                setTimeout(() => setStatusMessage(''), 2000)
+                toast.error('请先在首页启用作弊模式')
               }
             }}
           >
@@ -180,6 +183,7 @@ export function CSGOMenu() {
               onCommandChange={setCustomCommand}
               onSubmit={handleCustomCommand}
               onReset={resetAll}
+              onLaunchGame={launchGame}
             />
           </TabsContent>
 
@@ -209,7 +213,7 @@ export function CSGOMenu() {
 
           {/* 设置 Tab */}
           <TabsContent value="settings">
-            <SettingsTab />
+            <SettingsTab onConsoleKeyChange={(key) => setConsoleKey(key)} />
           </TabsContent>
         </div>
       </Tabs>

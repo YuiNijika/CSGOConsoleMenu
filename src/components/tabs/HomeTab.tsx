@@ -1,4 +1,4 @@
-import { AlertTriangle, Shield, CheckCircle, Terminal, RefreshCw } from "lucide-react"
+import { AlertTriangle, Shield, CheckCircle, Terminal, RefreshCw, Gamepad2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface HomeTabProps {
@@ -13,6 +13,7 @@ interface HomeTabProps {
   onCommandChange: (value: string) => void
   onSubmit: (e: React.FormEvent) => void
   onReset: () => void
+  onLaunchGame: () => void
 }
 
 export function HomeTab({
@@ -27,6 +28,7 @@ export function HomeTab({
   onCommandChange,
   onSubmit,
   onReset,
+  onLaunchGame,
 }: HomeTabProps) {
   if (csgoWindowFound === false) {
     return (
@@ -39,6 +41,10 @@ export function HomeTab({
             </p>
           </div>
         </div>
+        <Button onClick={onLaunchGame} variant="default" size="sm" className="w-full">
+          <Gamepad2 className="h-4 w-4 mr-2" />
+          启动 CSGO（通过 Steam）
+        </Button>
       </div>
     )
   }

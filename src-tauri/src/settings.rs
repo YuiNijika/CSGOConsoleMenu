@@ -19,21 +19,26 @@ impl Default for AppSettings {
 
 impl AppSettings {
     pub fn get_config_path() -> PathBuf {
-        let app_data = std::env::var("APPDATA").unwrap_or_else(|_| ".".to_string());
-        let mut path = PathBuf::from(app_data);
-        path.push("com.yuinijika.csgo.consolemenu");
-        path.push("config.json");
-        path
+        PathBuf::from("./src/config.json")
     }
 
     pub fn load() -> Self {
         let path = Self::get_config_path();
+        println!("尝试从 {:?} 加载配置", path);
         if path.exists() {
             if let Ok(content) = fs::read_to_string(&path) {
+                println!("配置文件内容：{}", content);
                 if let Ok(settings) = serde_json::from_str(&content) {
+                    println!("配置加载成功：{:?}", settings);
                     return settings;
+                } else {
+                    println!("配置文件解析失败");
                 }
+            } else {
+                println!("配置文件读取失败");
             }
+        } else {
+            println!("配置文件不存在");
         }
         Self::default()
     }
@@ -52,6 +57,6 @@ impl AppSettings {
         fs::write(&path, content)
             .map_err(|e| format!("写入文件失败：{:?}", e))?;
         
-        Ok("设置已保存".to_string())
+        Ok("设置已保存到".to_string())
     }
 }
