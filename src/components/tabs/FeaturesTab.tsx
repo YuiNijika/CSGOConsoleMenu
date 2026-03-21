@@ -1,5 +1,4 @@
-import { Shield, Crosshair, Target, Settings, Zap, RefreshCw, Users, Sword, CheckCircle } from "lucide-react"
-import { Switch } from "@/components/ui/switch"
+import { Shield, Target, Zap, RefreshCw, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -99,8 +98,6 @@ const serverCommands = [
   { name: "观战位 5", command: "mp_spectators_max 5" },
   { name: "雷达显示所有人", command: "mp_radar_showall 1" },
 ]
-
-const equipmentCommands: { name: string; command: string }[] = []
 
 const mapData = {
   activeDuty: [
